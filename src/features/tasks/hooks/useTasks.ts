@@ -37,16 +37,13 @@ export function useTasks(): UseTasksReturn {
     try {
       setIsLoading(true);
       setError(null);
-      console.log('Loading tasks...');
       const tasksData = await tasksApi.getTasks();
-      console.log('Tasks loaded:', tasksData);
-      // Garante que sempre seja um array
       setTasks(Array.isArray(tasksData?.data) ? tasksData?.data : []);
     } catch (error: any) {
       console.error('Error loading tasks:', error);
       const errorMessage = error?.message || 'Failed to load tasks';
       setError(errorMessage);
-      setTasks([]); // Reset para array vazio em caso de erro
+      setTasks([]);
     } finally {
       setIsLoading(false);
     }
@@ -57,13 +54,12 @@ export function useTasks(): UseTasksReturn {
       setIsLoading(true);
       setError(null);
       const newTask = await tasksApi.createTask(data);
-      
+
       setTasks(prev => {
-        // Garante que prev seja um array
         const currentTasks = Array.isArray(prev) ? prev : [];
         return [...currentTasks, newTask];
       });
-      
+
       return newTask;
     } catch (error: any) {
       const errorMessage = error?.message || 'Failed to create task';
@@ -79,12 +75,14 @@ export function useTasks(): UseTasksReturn {
       setIsLoading(true);
       setError(null);
       const updatedTask = await tasksApi.updateTask(id, data);
-      
+
       setTasks(prev => {
         const currentTasks = Array.isArray(prev) ? prev : [];
         return currentTasks.map(task => task.id === id ? updatedTask : task);
       });
-      
+
+      loadTasks()
+
       return updatedTask;
     } catch (error: any) {
       const errorMessage = error?.message || 'Failed to update task';
@@ -100,11 +98,13 @@ export function useTasks(): UseTasksReturn {
       setIsLoading(true);
       setError(null);
       await tasksApi.deleteTask(id);
-      
+
       setTasks(prev => {
         const currentTasks = Array.isArray(prev) ? prev : [];
         return currentTasks.filter(task => task.id !== id);
       });
+
+      loadTasks()
     } catch (error: any) {
       const errorMessage = error?.message || 'Failed to delete task';
       setError(errorMessage);

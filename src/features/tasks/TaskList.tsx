@@ -2,47 +2,44 @@
 
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent } from '@/shared/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
-import { getTaskStatusLabel } from '@/shared/models/task.status';
 import { Task, TaskStatus } from '@/shared/types/task.types';
-import { Edit, MoreVertical, Trash2, Clock, CheckCircle2, Circle } from 'lucide-react';
+import { Edit, MoreVertical, Trash2, Clock, Circle, PlayCircle, CheckCircle2, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCorners,
+} from '@dnd-kit/core';
+import { useState } from 'react';
 
 interface TaskListProps {
   tasks: Task[];
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onStatusChange: (task: Task, newStatus: TaskStatus) => void;
 }
 
-export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
-  const getStatusIcon = (status: TaskStatus) => {
-    switch (status) {
-      case TaskStatus.CONCLUIDA:
-        return <CheckCircle2 className="h-5 w-5 text-green-600" />;
-      case TaskStatus.EM_ANDAMENTO:
-        return <Clock className="h-5 w-5 text-blue-600" />;
-      default:
-        return <Circle className="h-5 w-5 text-gray-400" />;
-    }
-  };
+export function TaskList({ tasks, onEdit, onDelete, onStatusChange }: TaskListProps) {
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
 
-  const getStatusColor = (status: TaskStatus) => {
-    switch (status) {
-      case TaskStatus.PENDENTE:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-      case TaskStatus.EM_ANDAMENTO:
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      case TaskStatus.CONCLUIDA:
-        return 'bg-green-100 text-green-800 border-green-300';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   const formatDate = (dateString: string) => {
     try {
@@ -50,7 +47,9 @@ export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
       const now = new Date();
       const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
       
-      if (diffInHours < 24) {
+      if (diffInHours < 1) {
+        return 'Agora';
+      } else if (diffInHours < 24) {
         return `Há ${diffInHours}h`;
       } else if (diffInHours < 48) {
         return 'Ontem';
@@ -65,12 +64,131 @@ export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
     }
   };
 
+  const getTasksByStatus = (status: TaskStatus) => {
+    return tasks.filter(task => task.status === status);
+  };
+
+  const columns = [
+    {
+      status: TaskStatus.PENDENTE,
+      title: 'Pendente',
+      icon: Circle,
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+    },
+    {
+      status: TaskStatus.EM_ANDAMENTO,
+      title: 'Em Andamento',
+      icon: PlayCircle,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+    },
+    {
+      status: TaskStatus.CONCLUIDA,
+      title: 'Concluída',
+      icon: CheckCircle2,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+    },
+  ];
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const task = tasks.find(t => t.id === event.active.id);
+    setActiveTask(task || null);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) {
+      setActiveTask(null);
+      return;
+    }
+
+    const taskId = active.id as string;
+    const newStatus = over.id as TaskStatus;
+    
+    const task = tasks.find(t => t.id === taskId);
+    
+    if (task && task.status !== newStatus) {
+      onStatusChange(task, newStatus);
+    }
+    
+    setActiveTask(null);
+  };
+
+  const handleDragCancel = () => {
+    setActiveTask(null);
+  };
+
+  const TaskCard = ({ task, isDragging = false }: { task: Task; isDragging?: boolean }) => {
+    const isCompleted = task.status === TaskStatus.CONCLUIDA;
+
+    return (
+      <Card 
+        className={`mb-3 transition-all cursor-grab active:cursor-grabbing ${
+          isDragging ? 'opacity-50 rotate-2' : 'hover:shadow-md'
+        }`}
+      >
+        <CardContent className="p-4">
+          <div className="flex items-start gap-2">
+            <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <h4 className={`font-medium text-sm ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                  {task.title}
+                </h4>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0">
+                      <MoreVertical className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEdit(task)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => onDelete(task.id)}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              {task.description && (
+                <p className={`text-xs text-muted-foreground line-clamp-2 mb-3 ${
+                  isCompleted ? 'line-through' : ''
+                }`}>
+                  {task.description}
+                </p>
+              )}
+              
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                {formatDate(task.createdAt)}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   if (!tasks || tasks.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-16">
           <div className="rounded-full bg-muted p-6 mb-4">
-            <CheckCircle2 className="h-12 w-12 text-muted-foreground" />
+            <Clock className="h-12 w-12 text-muted-foreground" />
           </div>
           <h3 className="text-xl font-semibold mb-2">Nenhuma tarefa ainda</h3>
           <p className="text-sm text-muted-foreground text-center max-w-sm">
@@ -82,79 +200,124 @@ export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
   }
 
   return (
-    <div className="space-y-3">
-      {tasks.map((task) => (
-        <Card 
-          key={task.id} 
-          className="transition-all hover:shadow-md"
-        >
-          <CardContent className="p-4">
-            <div className="flex items-start gap-4">
-              {/* Ícone de Status */}
-              <div className="flex-shrink-0 mt-1">
-                {getStatusIcon(task.status)}
-              </div>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {columns.map((column) => {
+          const columnTasks = getTasksByStatus(column.status);
+          const Icon = column.icon;
 
-              {/* Conteúdo */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <h3 className={`font-semibold text-base mb-1 ${
-                      task.status === TaskStatus.CONCLUIDA ? 'line-through text-muted-foreground' : ''
-                    }`}>
-                      {task.title}
-                    </h3>
-                    {task.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                        {task.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <Badge 
-                        variant="outline" 
-                        className={`${getStatusColor(task.status)} border`}
-                      >
-                        {getTaskStatusLabel(task.status)}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatDate(task.createdAt)}
-                      </span>
-                    </div>
-                  </div>
+          return (
+            <DroppableColumn
+              key={column.status}
+              id={column.status}
+              column={column}
+              tasks={columnTasks}
+              Icon={Icon}
+              TaskCard={TaskCard}
+            />
+          );
+        })}
+      </div>
 
-                  {/* Menu de Ações */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="h-8 w-8 flex-shrink-0"
-                      >
-                        <span className="sr-only">Abrir menu</span>
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onEdit(task)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => onDelete(task.id)}
-                        className="text-red-600 focus:text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
+      <DragOverlay>
+        {activeTask ? (
+          <div className="rotate-3 scale-105">
+            <TaskCard task={activeTask} />
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
+function DroppableColumn({ 
+  id, 
+  column, 
+  tasks, 
+  Icon, 
+  TaskCard 
+}: { 
+  id: TaskStatus;
+  column: any;
+  tasks: Task[];
+  Icon: any;
+  TaskCard: any;
+}) {
+  const [isOver, setIsOver] = useState(false);
+
+  return (
+    <div
+      data-droppable-id={id}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsOver(true);
+      }}
+      onDragLeave={() => setIsOver(false)}
+      onDrop={() => setIsOver(false)}
+      className="h-full"
+    >
+      <Card 
+        className={`${column.borderColor} border-2 transition-all ${
+          isOver ? 'ring-2 ring-primary ring-offset-2' : ''
+        }`}
+      >
+        <CardHeader className={`${column.bgColor} pb-3`}>
+          <CardTitle className="flex items-center justify-between text-base">
+            <div className="flex items-center gap-2">
+              <Icon className={`h-5 w-5 ${column.color}`} />
+              <span>{column.title}</span>
             </div>
-          </CardContent>
-        </Card>
-      ))}
+            <Badge variant="secondary" className="ml-2">
+              {tasks.length}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4 min-h-[400px]">
+          {tasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Icon className={`h-8 w-8 ${column.color} opacity-20 mb-2`} />
+              <p className="text-sm text-muted-foreground">
+                Nenhuma tarefa
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Arraste tarefas aqui
+              </p>
+            </div>
+          ) : (
+            <div>
+              {tasks.map((task) => (
+                <div
+                  key={task.id}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('taskId', task.id);
+                    e.dataTransfer.setData('currentStatus', task.status);
+                  }}
+                  onDragEnd={(e) => {
+                    const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+                    const droppableColumn = dropTarget?.closest('[data-droppable-id]');
+                    
+                    if (droppableColumn) {
+                      const newStatus = droppableColumn.getAttribute('data-droppable-id') as TaskStatus;
+                      if (newStatus && task.status !== newStatus) {
+                      }
+                    }
+                  }}
+                >
+                  <TaskCard task={task} />
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

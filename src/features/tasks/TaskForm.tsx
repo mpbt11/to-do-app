@@ -37,7 +37,7 @@ interface TaskFormProps {
 
 export function TaskForm({ task, isOpen, onClose }: TaskFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { createTask, updateTask } = useTasks();
+  const { createTask, updateTask, loadTasks } = useTasks();
   
   const {
     register,
@@ -81,9 +81,11 @@ export function TaskForm({ task, isOpen, onClose }: TaskFormProps) {
       
       if (task?.id) {
         await updateTask(task.id, data as UpdateTaskData);
+        await loadTasks();
         toast.success('Tarefa atualizada com sucesso!');
       } else {
         await createTask(data as CreateTaskData);
+        await loadTasks();
         toast.success('Tarefa criada com sucesso!');
       }
       

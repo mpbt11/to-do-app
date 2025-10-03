@@ -5,7 +5,7 @@ import { useTasks } from './hooks/useTasks';
 import { TaskList } from './TaskList';
 import { useState } from 'react';
 import { TaskForm } from './TaskForm';
-import { Task } from '@/shared/types/task.types';
+import { Task, TaskStatus } from '@/shared/types/task.types';
 import { Loader2, AlertCircle, RefreshCw, Plus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { toast } from 'sonner';
@@ -15,7 +15,7 @@ export default function TasksView() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { tasks, isLoading, error, deleteTask, clearError, loadTasks } = useTasks();
+  const { tasks, isLoading, error, deleteTask, clearError, loadTasks, updateTask } = useTasks();
 
   const handleEdit = (task: Task) => {
     setSelectedTask(task);
@@ -26,11 +26,30 @@ export default function TasksView() {
     if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
       try {
         await deleteTask(id);
+        await loadTasks();
         toast.success('Tarefa excluída com sucesso!');
       } catch (error) {
         toast.error('Erro ao excluir tarefa');
         console.error('Erro ao excluir tarefa:', error);
       }
+    }
+  };
+
+  const handleStatusChange = async (task: Task, newStatus: TaskStatus) => {
+    try {
+      await updateTask(task.id, { status: newStatus });
+      
+      const statusMessages = {
+        [TaskStatus.PENDENTE]: 'Tarefa movida para Pendente',
+        [TaskStatus.EM_ANDAMENTO]: 'Tarefa movida para Em Andamento',
+        [TaskStatus.CONCLUIDA]: 'Tarefa concluída!',
+      };
+      
+      toast.success(statusMessages[newStatus]);
+      await loadTasks();
+    } catch (error) {
+      toast.error('Erro ao atualizar status');
+      console.error('Erro ao atualizar status:', error);
     }
   };
 
@@ -57,13 +76,12 @@ export default function TasksView() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      {/* Cabeçalho com título e botões */}
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Minhas Tarefas</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Organize e acompanhe suas atividades diárias
+            Organize e acompanhe suas atividades no quadro Kanban
           </p>
         </div>
         <div className="flex gap-2">
@@ -82,7 +100,6 @@ export default function TasksView() {
         </div>
       </div>
 
-      {/* Erro */}
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -100,7 +117,6 @@ export default function TasksView() {
         </Alert>
       )}
 
-      {/* Conteúdo da página */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-2">
@@ -113,10 +129,10 @@ export default function TasksView() {
           tasks={tasks}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
         />
       )}
 
-      {/* Modal de criação/edição */}
       <TaskForm
         isOpen={openModal}
         task={selectedTask}

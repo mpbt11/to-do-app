@@ -9,44 +9,60 @@ import { Task, TaskStatus } from '@/shared/types/task.types';
 import { Loader2, AlertCircle, RefreshCw, Plus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/shared/components/confirm-delete-dialog';
 
 export default function TasksView() {
   const [openModal, setOpenModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { tasks, isLoading, error, deleteTask, clearError, loadTasks, updateTask } = useTasks();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [taskIdToDelete, setTaskIdToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const {
+    tasks, isLoading, error, deleteTask, clearError, loadTasks, updateTask, createTask,
+  } = useTasks();
 
   const handleEdit = (task: Task) => {
     setSelectedTask(task);
     setOpenModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
-      try {
-        await deleteTask(id);
-        await loadTasks();
-        toast.success('Tarefa excluída com sucesso!');
-      } catch (error) {
-        toast.error('Erro ao excluir tarefa');
-        console.error('Erro ao excluir tarefa:', error);
-      }
+  const askDelete = (id: string) => {
+    setTaskIdToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!taskIdToDelete) return;
+    try {
+      setIsDeleting(true);
+      await deleteTask(taskIdToDelete);
+      await loadTasks(); 
+      toast.success('Tarefa excluída com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao excluir tarefa');
+      console.error('Erro ao excluir tarefa:', error);
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setTaskIdToDelete(null);
     }
   };
 
   const handleStatusChange = async (task: Task, newStatus: TaskStatus) => {
     try {
       await updateTask(task.id, { status: newStatus });
-      
-      const statusMessages = {
-        [TaskStatus.PENDENTE]: 'Tarefa movida para Pendente',
-        [TaskStatus.EM_ANDAMENTO]: 'Tarefa movida para Em Andamento',
-        [TaskStatus.CONCLUIDA]: 'Tarefa concluída!',
-      };
-      
-      toast.success(statusMessages[newStatus]);
-      await loadTasks();
+      toast.success(
+        newStatus === TaskStatus.CONCLUIDA
+          ? 'Tarefa concluída!'
+          : newStatus === TaskStatus.EM_ANDAMENTO
+            ? 'Tarefa movida para Em Andamento'
+            : 'Tarefa movida para Pendente'
+      );
+      await loadTasks(); 
     } catch (error) {
       toast.error('Erro ao atualizar status');
       console.error('Erro ao atualizar status:', error);
@@ -68,7 +84,7 @@ export default function TasksView() {
     try {
       await loadTasks();
       toast.success('Lista atualizada!');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao atualizar lista');
     } finally {
       setIsRefreshing(false);
@@ -90,6 +106,7 @@ export default function TasksView() {
             size="icon"
             onClick={handleRefresh}
             disabled={isRefreshing}
+            aria-label="Atualizar lista"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
@@ -103,7 +120,7 @@ export default function TasksView() {
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
+          <AlertDescription className="flex items-center justify-between w-full">
             <span>{error}</span>
             <Button
               variant="ghost"
@@ -128,7 +145,7 @@ export default function TasksView() {
         <TaskList
           tasks={tasks}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={askDelete}
           onStatusChange={handleStatusChange}
         />
       )}
@@ -137,6 +154,19 @@ export default function TasksView() {
         isOpen={openModal}
         task={selectedTask}
         onClose={handleCloseModal}
+        createTask={createTask}
+        updateTask={updateTask}
+        reload={loadTasks}
+      />
+
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        confirming={isDeleting}
+        onOpenChange={(o) => {
+          if (!o) setTaskIdToDelete(null);
+          setDeleteDialogOpen(o);
+        }}
+        onConfirm={confirmDelete}
       />
     </div>
   );

@@ -73,9 +73,9 @@ export function TaskList({ tasks, onEdit, onDelete, onStatusChange }: TaskListPr
       status: TaskStatus.PENDENTE,
       title: 'Pendente',
       icon: Circle,
-      color: 'text-gray-600',
-      bgColor: 'bg-gray-50',
-      borderColor: 'border-gray-200',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
     },
     {
       status: TaskStatus.EM_ANDAMENTO,

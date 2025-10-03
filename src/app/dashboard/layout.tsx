@@ -9,15 +9,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Recuo = largura do sidebar; quando colapsado, troca pra largura “icon” */}
       <div
         className="
-          min-h-screen w-full
-          md:pl-[var(--sidebar-width)]
-          transition-[padding] duration-200
-          data-[collapsible=icon]:md:pl-[var(--sidebar-width-icon)]
-        "
+          min-h-screen w-full"
       >
-        
-
-        <main className="p-4">
+        <main >
           {children}
         </main>
       </div>

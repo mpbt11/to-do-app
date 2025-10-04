@@ -89,7 +89,7 @@ export function useTasks(): UseTasksReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [loadTasks]);
+  }, []);
 
   const deleteTask = useCallback(async (id: string): Promise<void> => {
     try {
@@ -108,7 +108,7 @@ export function useTasks(): UseTasksReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [loadTasks]);
+  }, []);
 
   const getTasksByStatus = useCallback((status: TaskStatus): Task[] => {
     return tasks.filter(task => task.status === status);
@@ -130,7 +130,7 @@ export function useTasks(): UseTasksReturn {
 
   useEffect(() => {
     loadTasks();
-  }, [loadTasks]);
+  }, []);
 
   return {
     tasks,

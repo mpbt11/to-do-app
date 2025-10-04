@@ -40,7 +40,7 @@ export default function TasksView() {
     try {
       setIsDeleting(true);
       await deleteTask(taskIdToDelete);
-      await loadTasks(); 
+      await loadTasks();
       toast.success('Tarefa excluída com sucesso!');
     } catch (error) {
       toast.error('Erro ao excluir tarefa');
@@ -62,7 +62,6 @@ export default function TasksView() {
             ? 'Tarefa movida para Em Andamento'
             : 'Tarefa movida para Pendente'
       );
-      await loadTasks(); 
     } catch (error) {
       toast.error('Erro ao atualizar status');
       console.error('Erro ao atualizar status:', error);
@@ -110,10 +109,15 @@ export default function TasksView() {
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
-          <Button onClick={handleCreateNew}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button
+            type="button"
+            onClick={handleCreateNew}
+            className="cursor-pointer disabled:cursor-not-allowed"
+          >
+            <Plus className="size-4 mr-2" aria-hidden="true" />
             Nova Tarefa
           </Button>
+
         </div>
       </div>
 

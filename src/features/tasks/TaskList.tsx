@@ -20,6 +20,8 @@ import {
   useSensor,
   useSensors,
   closestCorners,
+  useDroppable,
+  useDraggable,
 } from '@dnd-kit/core';
 import { useState } from 'react';
 
@@ -126,12 +128,30 @@ export function TaskList({ tasks, onEdit, onDelete, onStatusChange }: TaskListPr
 
   const TaskCard = ({ task, isDragging = false }: { task: Task; isDragging?: boolean }) => {
     const isCompleted = task.status === TaskStatus.CONCLUIDA;
+    
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      isDragging: isDraggingHook,
+    } = useDraggable({
+      id: task.id,
+    });
+
+    const style = transform ? {
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    } : undefined;
 
     return (
       <Card 
+        ref={setNodeRef}
+        style={style}
         className={`mb-3 transition-all cursor-grab active:cursor-grabbing ${
-          isDragging ? 'opacity-50 rotate-2' : 'hover:shadow-md'
+          isDragging || isDraggingHook ? 'opacity-50 rotate-2' : 'hover:shadow-md'
         }`}
+        {...attributes}
+        {...listeners}
       >
         <CardContent className="p-4">
           <div className="flex items-start gap-2">
@@ -256,17 +276,13 @@ function DroppableColumn({
   Icon: React.ComponentType<{ className?: string }>;
   TaskCard: React.ComponentType<{ task: Task; isDragging?: boolean }>;
 }) {
-  const [isOver, setIsOver] = useState(false);
+  const { isOver, setNodeRef } = useDroppable({
+    id: id,
+  });
 
   return (
     <div
-      data-droppable-id={id}
-      onDragOver={(e) => {
-        e.preventDefault();
-        setIsOver(true);
-      }}
-      onDragLeave={() => setIsOver(false)}
-      onDrop={() => setIsOver(false)}
+      ref={setNodeRef}
       className="h-full"
     >
       <Card 
@@ -299,27 +315,7 @@ function DroppableColumn({
           ) : (
             <div>
               {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('taskId', task.id);
-                    e.dataTransfer.setData('currentStatus', task.status);
-                  }}
-                  onDragEnd={(e) => {
-                    const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
-                    const droppableColumn = dropTarget?.closest('[data-droppable-id]');
-                    
-                    if (droppableColumn) {
-                      const newStatus = droppableColumn.getAttribute('data-droppable-id') as TaskStatus;
-                      if (newStatus && task.status !== newStatus) {
-                      }
-                    }
-                  }}
-                >
-                  <TaskCard task={task} />
-                </div>
+                <TaskCard key={task.id} task={task} />
               ))}
             </div>
           )}

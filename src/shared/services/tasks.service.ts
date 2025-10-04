@@ -7,7 +7,7 @@ export const taskService = {
     try {
       const response = await httpClient.get<Task[]>(API_ROUTES.TASKS.BASE);
       return response;
-    } catch (error: unknown) {
+    } catch {
       throw new Error('Erro ao carregar tarefas');
     }
   },
@@ -16,7 +16,7 @@ export const taskService = {
     try {
       const response = await httpClient.get<Task>(API_ROUTES.TASKS.BY_ID(id));
       return response;
-    } catch (error: unknown) {
+    } catch {
       throw new Error('Erro ao carregar tarefa');
     }
   },
@@ -25,7 +25,7 @@ export const taskService = {
     try {
       const response = await httpClient.post<Task>(API_ROUTES.TASKS.BASE, data);
       return response;
-    } catch (error: unknown) {
+    } catch {
       throw new Error('Erro ao criar tarefa');
     }
   },
@@ -34,7 +34,7 @@ export const taskService = {
     try {
       const response = await httpClient.patch<Task>(API_ROUTES.TASKS.BY_ID(id), data);
       return response;
-    } catch (error: unknown) {
+    } catch {
       throw new Error('Erro ao atualizar tarefa');
     }
   },
@@ -42,7 +42,7 @@ export const taskService = {
   async deleteTask(id: string): Promise<void> {
     try {
       await httpClient.delete(API_ROUTES.TASKS.BY_ID(id));
-    } catch (error: unknown) {
+    } catch {
       throw new Error('Erro ao excluir tarefa');
     }
   },

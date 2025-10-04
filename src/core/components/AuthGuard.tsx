@@ -14,16 +14,12 @@ export function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
-  console.log('AuthGuard: requireAuth:', requireAuth, 'isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
-
   useEffect(() => {
     if (isLoading) return;
 
     if (requireAuth && !isAuthenticated) {
-      console.log('AuthGuard: Redirecting to login');
       router.push(APP_ROUTES.LOGIN);
     } else if (!requireAuth && isAuthenticated) {
-      console.log('AuthGuard: Redirecting to dashboard');
       router.push(APP_ROUTES.DASHBOARD);
     }
   }, [isAuthenticated, isLoading, requireAuth, router]);

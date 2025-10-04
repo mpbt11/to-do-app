@@ -10,8 +10,11 @@ export const authApi = {
         credentials
       );
       return response;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Erro ao fazer login');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao fazer login'
+        : 'Erro ao fazer login';
+      throw new Error(errorMessage);
     }
   },
 
@@ -22,8 +25,11 @@ export const authApi = {
         data
       );
       return response;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Erro ao criar conta');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao criar conta'
+        : 'Erro ao criar conta';
+      throw new Error(errorMessage);
     }
   },
 };

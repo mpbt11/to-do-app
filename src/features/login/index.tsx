@@ -42,7 +42,7 @@ export function LoginForm({
       await login(data);
       router.push(APP_ROUTES.DASHBOARD);
     } catch (error) {
-      // Error is handled by the auth context
+      console.error(error)
     } finally {
       setIsLoading(false);
     }

@@ -2,7 +2,6 @@
 
 import { Bell, Search } from "lucide-react"
 
-import { Badge } from "@/shared/components/ui/badge"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/shared/components/ui/breadcrumb"
 import { Button } from "@/shared/components/ui/button"
 import {

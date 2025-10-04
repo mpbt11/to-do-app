@@ -1,4 +1,3 @@
-import { DataTable } from "@/shared/components/data-table";
 import { AuthGuard } from "@/core/components/AuthGuard";
 import TasksView from "@/features/tasks";
 

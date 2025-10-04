@@ -1,17 +1,20 @@
-import { Task, CreateTaskData, UpdateTaskData, TasksResponse, TaskResponse, ApiResponse } from '@/shared/types/task.types';
+import { Task, CreateTaskData, UpdateTaskData, TasksResponse, TaskResponse } from '@/shared/types/task.types';
 import { httpClient } from '../interceptors/httpClient';
 import { API_ROUTES } from '../global/endpoints';
 
 export const tasksApi = {
   async getTasks(): Promise<TasksResponse> {
     try {
-      console.log('API: Getting tasks from:', API_ROUTES.TASKS.BASE);
+    
       const response = await httpClient.get<TasksResponse>(API_ROUTES.TASKS.BASE);
-      console.log('API: Tasks response:', response);
+  
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('API: Error getting tasks:', error);
-      throw new Error(error.response?.data?.message || 'Erro ao carregar tarefas');
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao carregar tarefas'
+        : 'Erro ao carregar tarefas';
+      throw new Error(errorMessage);
     }
   },
 
@@ -19,8 +22,11 @@ export const tasksApi = {
     try {
       const response = await httpClient.get<TaskResponse>(API_ROUTES.TASKS.BY_ID(id));
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Erro ao carregar tarefa');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao carregar tarefa'
+        : 'Erro ao carregar tarefa';
+      throw new Error(errorMessage);
     }
   },
 
@@ -28,8 +34,11 @@ export const tasksApi = {
     try {
       const response = await httpClient.post<TaskResponse>(API_ROUTES.TASKS.BASE, data);
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Erro ao criar tarefa');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao criar tarefa'
+        : 'Erro ao criar tarefa';
+      throw new Error(errorMessage);
     }
   },
 
@@ -37,16 +46,22 @@ export const tasksApi = {
     try {
       const response = await httpClient.patch<TaskResponse>(API_ROUTES.TASKS.BY_ID(id), data);
       return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Erro ao atualizar tarefa');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao atualizar tarefa'
+        : 'Erro ao atualizar tarefa';
+      throw new Error(errorMessage);
     }
   },
 
   async deleteTask(id: string): Promise<void> {
     try {
       await httpClient.delete(API_ROUTES.TASKS.BY_ID(id));
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Erro ao excluir tarefa');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao excluir tarefa'
+        : 'Erro ao excluir tarefa';
+      throw new Error(errorMessage);
     }
   },
 };

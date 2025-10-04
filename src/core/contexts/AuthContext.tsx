@@ -2,7 +2,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { authApi } from '@/core/services/authApi';
-import { AuthResponse, LoginCredentials, RegisterData, User } from '@/shared/types/task.types';
+import { LoginCredentials, RegisterData, User } from '@/shared/types/task.types';
 import Cookies from 'js-cookie';
 import { STORAGE_KEYS } from '@/shared/config/constants';
 
@@ -29,21 +29,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = Cookies.get(STORAGE_KEYS.ACCESS_TOKEN);
         const userString = Cookies.get(STORAGE_KEYS.USER);
         
-        console.log('Auth: Token found:', !!token);
-        console.log('Auth: User data found:', !!userString);
-        
         if (token && userString) {
           const userData = JSON.parse(userString) as User;
           setUser(userData);
         } else {
-          // Limpar dados se não houver token ou usuário
           Cookies.remove(STORAGE_KEYS.ACCESS_TOKEN);
           Cookies.remove(STORAGE_KEYS.USER);
           setUser(null);
         }
-      } catch (error) {
-        console.error('Auth: Error parsing user data:', error);
-        // Dados inválidos, limpar cookies
+      } catch {
         Cookies.remove(STORAGE_KEYS.ACCESS_TOKEN);
         Cookies.remove(STORAGE_KEYS.USER);
         setUser(null);
@@ -62,9 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const { data } = await authApi.login(credentials);
       
-      // Armazenar token e dados do usuário
       Cookies.set(STORAGE_KEYS.ACCESS_TOKEN, data.access_token, {
-        expires: 7, // 7 dias
+        expires: 7, 
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
       });
@@ -76,8 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       setUser(data.user);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      setError(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);
@@ -89,7 +83,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
       
-      // Convert RegisterData to RegisterApiData
       const apiData = {
         name: data.name,
         email: data.email,
@@ -97,7 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       const response = await authApi.register(apiData);
       
-      // Armazenar token e dados do usuário após registro
       Cookies.set(STORAGE_KEYS.ACCESS_TOKEN, response.data.access_token, {
         expires: 7,
         secure: process.env.NODE_ENV === 'production',
@@ -111,8 +103,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       setUser(response.data.user);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      setError(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);

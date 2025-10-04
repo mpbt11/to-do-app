@@ -192,7 +192,7 @@ export function TaskList({ tasks, onEdit, onDelete, onStatusChange }: TaskListPr
           </div>
           <h3 className="text-xl font-semibold mb-2">Nenhuma tarefa ainda</h3>
           <p className="text-sm text-muted-foreground text-center max-w-sm">
-            Comece criando sua primeira tarefa usando o botão "Nova Tarefa" acima
+            Comece criando sua primeira tarefa usando o botão &quot;Nova Tarefa&quot; acima
           </p>
         </CardContent>
       </Card>
@@ -244,10 +244,17 @@ function DroppableColumn({
   TaskCard 
 }: { 
   id: TaskStatus;
-  column: any;
+  column: {
+    status: TaskStatus;
+    title: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+  };
   tasks: Task[];
-  Icon: any;
-  TaskCard: any;
+  Icon: React.ComponentType<{ className?: string }>;
+  TaskCard: React.ComponentType<{ task: Task; isDragging?: boolean }>;
 }) {
   const [isOver, setIsOver] = useState(false);
 

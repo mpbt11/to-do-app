@@ -13,7 +13,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
@@ -26,7 +25,7 @@ import {
 } from "@/shared/components/ui/sidebar"
 import { useAuth } from "@/core/contexts/AuthContext"
 import { APP_ROUTES } from "@/core/global/paths"
-// This is sample data.
+
 const data = {
   navMain: [
     {

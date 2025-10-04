@@ -81,8 +81,8 @@ export function TaskForm({
       }
 
       handleClose();
-    } catch (error: any) {
-      const message = error?.message || 'Erro ao salvar tarefa';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao salvar tarefa';
       toast.error(message);
       console.error('Erro ao salvar tarefa:', error);
     } finally {

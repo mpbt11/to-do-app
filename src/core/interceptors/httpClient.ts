@@ -4,8 +4,8 @@ import Cookies from 'js-cookie';
 
 export interface IHttpClient {
   get<T>(url: string, config?: AxiosRequestConfig): Promise<T>;
-  post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
-  patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
+  post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
   delete<T>(url: string, config?: AxiosRequestConfig): Promise<T>;
 }
 
@@ -25,7 +25,6 @@ export class HttpClient implements IHttpClient {
   }
 
   private setupInterceptors(): void {
-    // Request interceptor para adicionar token
     this.client.interceptors.request.use(
       (config) => {
         const token = Cookies.get(STORAGE_KEYS.ACCESS_TOKEN);
@@ -37,12 +36,10 @@ export class HttpClient implements IHttpClient {
       (error) => Promise.reject(error)
     );
 
-    // Response interceptor para tratar erros
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Token expirado ou inválido
           Cookies.remove(STORAGE_KEYS.ACCESS_TOKEN);
           Cookies.remove(STORAGE_KEYS.USER);
           if (typeof window !== 'undefined') {
@@ -55,18 +52,16 @@ export class HttpClient implements IHttpClient {
   }
 
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    console.log('HTTP Client: Making GET request to:', url);
     const response = await this.client.get<T>(url, config);
-    console.log('HTTP Client: Response:', response.data);
     return response.data;
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.client.post<T>(url, data, config);
     return response.data;
   }
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.client.patch<T>(url, data, config);
     return response.data;
   }
@@ -77,5 +72,4 @@ export class HttpClient implements IHttpClient {
   }
 }
 
-// Singleton instance
 export const httpClient = new HttpClient();

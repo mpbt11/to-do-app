@@ -1,4 +1,3 @@
-// Auth Types
 export interface User {
   id: string;
   email: string;
@@ -31,7 +30,6 @@ export interface RegisterApiData {
   name: string;
 }
 
-// Task Types
 export interface Task {
   id: string;
   title: string;
@@ -60,7 +58,6 @@ export interface UpdateTaskData {
   status?: TaskStatus;
 }
 
-// API Response Types
 export interface ApiResponse<T> {
   data: T;
 }

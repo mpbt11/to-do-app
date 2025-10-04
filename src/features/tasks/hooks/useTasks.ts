@@ -39,9 +39,9 @@ export function useTasks(): UseTasksReturn {
       setError(null);
       const tasksData = await tasksApi.getTasks();
       setTasks(Array.isArray(tasksData?.data) ? tasksData?.data : []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading tasks:', error);
-      const errorMessage = error?.message || 'Failed to load tasks';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load tasks';
       setError(errorMessage);
       setTasks([]);
     } finally {
@@ -61,8 +61,8 @@ export function useTasks(): UseTasksReturn {
       });
 
       return newTask;
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Failed to create task';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create task';
       setError(errorMessage);
       throw error;
     } finally {
@@ -81,17 +81,15 @@ export function useTasks(): UseTasksReturn {
         return currentTasks.map(task => task.id === id ? updatedTask : task);
       });
 
-      loadTasks()
-
       return updatedTask;
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Failed to update task';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update task';
       setError(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadTasks]);
 
   const deleteTask = useCallback(async (id: string): Promise<void> => {
     try {
@@ -103,16 +101,14 @@ export function useTasks(): UseTasksReturn {
         const currentTasks = Array.isArray(prev) ? prev : [];
         return currentTasks.filter(task => task.id !== id);
       });
-
-      loadTasks()
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Failed to delete task';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete task';
       setError(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadTasks]);
 
   const getTasksByStatus = useCallback((status: TaskStatus): Task[] => {
     return tasks.filter(task => task.status === status);

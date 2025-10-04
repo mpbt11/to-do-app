@@ -168,20 +168,10 @@ export function TaskForm({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-              className="cursor-pointer disabled:cursor-not-allowed"
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="cursor-pointer disabled:cursor-not-allowed"
-            >
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
